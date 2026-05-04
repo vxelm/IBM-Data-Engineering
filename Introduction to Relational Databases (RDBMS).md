@@ -199,11 +199,13 @@ Abstraction ↓
 Crow's foot → shows cardinality
 ```
 
-![[Pasted image 20260503223331.png]]
----
+![](assets/Pasted%20image%2020260503223331.png)
+
+
 
 **Crow's foot → shows cardinality**
-![[Pasted image 20260503223339.png]]
+![](assets/Pasted%20image%2020260503223339.png)
+
 
 ---
 
