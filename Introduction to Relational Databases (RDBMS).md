@@ -1,4 +1,4 @@
-#Model
+
 ## **Data Fundamentals**
 
 1. **Definition of Data**
@@ -199,13 +199,11 @@ Abstraction ↓
 Crow's foot → shows cardinality
 ```
 
-![image.png](attachment:416e6c06-a413-4c57-b838-efda02c1b98e:image.png)
-
+![[Pasted image 20260503223331.png]]
 ---
 
 **Crow's foot → shows cardinality**
-
-![image.png](attachment:376ebe89-dc8b-469d-80b2-f068428c9268:image.png)
+![[Pasted image 20260503223339.png]]
 
 ---
 
@@ -1099,6 +1097,10 @@ Si quieres, puedo hacer un **diagrama único de relaciones con ejemplos concreto
 ---
 
 ---
+
+
+---
+
 # Module 2
 ## Types of SQL Statements
 
