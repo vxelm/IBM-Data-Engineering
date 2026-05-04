@@ -1435,17 +1435,16 @@ Si quieres, puedo hacer un **diagrama único de relaciones con ejemplos concreto
 
 - Comparison of Data Movement Methods
 
-    
-    | Method | Scope | Key Feature | Best For |
-    
-    | :--- | :--- | :--- | :--- |
-    
-    | Backup/Restore | Entire Database | Creates an exact, complete copy. | Disaster Recovery, Full Clones. |
-    
-    | Import/Export | Single Table | Flexible, runs SQL INSERTs, checks constraints. | General-purpose data exchange. |
-    
-    | Load | Single Table | Extremely fast, bypasses SQL and constraints. | Populating huge tables quickly. |
-    
+| Method | Scope | Key Feature | Best For |
+
+| :--- | :--- | :--- | :--- |
+
+| Backup/Restore | Entire Database | Creates an exact, complete copy. | Disaster Recovery, Full Clones. |
+
+| Import/Export | Single Table | Flexible, runs SQL INSERTs, checks constraints. | General-purpose data exchange. |
+
+| Load | Single Table | Extremely fast, bypasses SQL and constraints. | Populating huge tables quickly. |
+
 
 ---
 
