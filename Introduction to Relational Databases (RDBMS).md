@@ -1103,6 +1103,10 @@ Si quieres, puedo hacer un **diagrama único de relaciones con ejemplos concreto
 
 ---
 
+
+
+---
+
 # Module 2
 ## Types of SQL Statements
 
@@ -1164,8 +1168,46 @@ Si quieres, puedo hacer un **diagrama único de relaciones con ejemplos concreto
 ### **Questions**
 
 - The video puts `TRUNCATE` in DDL and `DELETE` in DML. Both remove data, so what's the practical difference between `TRUNCATE TABLE my_table;` and `DELETE FROM my_table;`?
-- Are DDL and DML the only categories of SQL statements? What about commands for managing permissions (like `GRANT`) or for controlling transactions (like `COMMIT` and `ROLLBACK`)?
+	- DELETE: 
+		- Deletes data row by row. The engine reads each line before removing it.
+		- WHERE clause: You can filter what to delete
+		- ROLLBACK: you can safely issue a rollback within a transaction
+	- TRUNCATE: 
+		- Removes data by deallocating the memory pages that store the table.
+		- It's very fast
+		- Cannot be undone.
 
+- Are DDL and DML the only categories of SQL statements? What about commands for managing permissions (like `GRANT`) or for controlling transactions (like `COMMIT` and `ROLLBACK`)?
+	- Although DDL and DML are the most frequently mentioned. SQL is traditionally divided into five sublanguages or categories to organize all of its commands: 
+		- - **1. DDL (Data Definition Language):**
+    
+		    - Used to define or modify the database structure (tables, indexes, views).
+		        
+		    - _Commands:_ `CREATE`, `ALTER`, `DROP`, `TRUNCATE`.
+        
+		- **2. DML (Data Manipulation Language):**
+		
+				 Used to add, modify, or delete the data _inside_ those structures.
+					
+				- _Commands:_ `INSERT`, `UPDATE`, `DELETE`.
+        
+	- **3. DQL (Data Query Language):**
+	    
+	    - Used exclusively to query information. Many authors group it under DML, but formally it is its own category.
+	        
+	    - _Commands:_ `SELECT`.
+	        
+	- **4. DCL (Data Control Language):**
+	    
+	    - Handles security, managing who has access to what data.
+	        
+	    - _Commands:_ **`GRANT`** (give permissions) and **`REVOKE`** (remove permissions).
+	        
+	- **5. TCL (Transaction Control Language):**
+	    
+	    - Manages the changes made by DML commands. It ensures operations complete successfully or are reverted if there's an error, keeping the database in a consistent state.
+	        
+	    - _Commands:_ **`COMMIT`** (save changes permanently), **`ROLLBACK`** (undo changes of the current transaction), and **`SAVEPOINT`** (create a temporary restore point).
 ## Creating tables
 
 ### **Topic: Pre-Creation Checklist**
@@ -1392,6 +1434,7 @@ Si quieres, puedo hacer un **diagrama único de relaciones con ejemplos concreto
 **Diagrams**
 
 - Comparison of Data Movement Methods
+
     
     | Method | Scope | Key Feature | Best For |
     
