@@ -1465,3 +1465,69 @@ Here is why it differs from universal formats like CSV or JSON, and why a databa
 - **It preserves exact data types:** In a CSV, a number is just text. In PC/IXF, a packed decimal or a binary object is preserved in its native machine format, meaning the database doesn't have to waste CPU cycles translating text into binary data when reading it.
     
 - **The tradeoff:** As you noted, the major downside is interoperability. You cannot open a PC/IXF file in Notepad, Python, or Excel to quickly check the data. It is meant for machine-to-machine communication within the IBM ecosystem, whereas CSV and JSON are universal languages meant for sharing across different platforms.
+
+---
+
+## **Database Hierarchy and Schema Objects**
+
+---
+
+### **Topic: The RDBMS Hierarchy**
+
+**Keywords / Concepts**
+
+- **Instance:** The top-level logical boundary. A running copy of the database software on a server. An instance can contain multiple databases and has its own configuration and memory.
+- **Isolation:** Multiple instances can exist on one physical server but remain completely isolated. In the cloud, an instance refers to a specific running copy of a service.
+- **Database:** A unique entity within an instance with its own name, system catalog, and configuration files. Designed for organized data storage.
+- **Relational Model:** Focuses on establishing relationships between tables to improve data integrity and reduce redundant data.
+
+---
+
+### **Topic: Schemas — Logical Organization**
+
+**Keywords / Concepts**
+
+- **Schema:** A logical grouping of database objects. Think of it as a folder within a database used to organize tables, views, and triggers.
+- **Namespace / Name Qualifier:** Schemas prevent name conflicts. You can have two tables named `Sales` in different schemas (e.g., `Internal.Sales` vs. `External.Sales`).
+- **Implicit vs. Explicit Assignment:**
+    - **Explicit:** You specify the schema name when creating an object (`CREATE TABLE MySchema.MyTable...`).
+    - **Implicit:** If you omit the schema name, the database assigns the object to your **Default Schema** (usually your username).
+- **System Schema:** A specialized schema that holds the "brain" of the database (metadata, user permissions, index details, and partition information).
+
+---
+
+### **Topic: Common Database Objects**
+
+**Keywords / Concepts**
+
+- **Tables:** The basic logical structures consisting of rows and columns.
+- **Constraints:** Rules enforced on data to ensure accuracy (e.g., "Employee ID must be unique").
+- **Indexes:** Sets of pointers that speed up data retrieval and ensure uniqueness.
+- **Views:** "Virtual" tables. They represent data from one or more tables but do not store data themselves; they are essentially saved queries.
+- **Aliases:** Alternative, simpler names used to reference complex objects.
+- **Partitioning:** Splitting large tables into smaller, manageable logical pieces to enhance performance in big data scenarios (Data Warehousing).
+- **DDL (Data Definition Language):** The subset of SQL commands used to manage these objects, primarily `CREATE`, `ALTER`, and `DROP`.
+
+---
+
+### **Questions**
+
+- **How does a View differ from a Table in terms of storage?**
+
+    A Table stores data permanently on disk. A View is a logical representation — a "virtual" table that does not require permanent storage for its rows. It generates data dynamically by running a query on the underlying base tables.
+
+- **The "Schema-Database Paradox": How does the hierarchy change between MySQL and PostgreSQL?**
+
+    The video implies a strict hierarchy (Instance > Database > Schema). However, **MySQL** treats `SCHEMA` and `DATABASE` as interchangeable synonyms — creating a schema is literally creating a database. In contrast, **PostgreSQL** and **SQL Server** follow the strict hierarchy, where one database contains multiple schemas. This "flattened" hierarchy in MySQL is important for developers moving between platforms.
+
+- **Security Boundaries: How do Senior DBAs use Schemas to implement the "Principle of Least Privilege"?**
+
+    The most critical professional use of Schemas is **Access Control**. Permissions are granted at the **Schema level** — not at the table level (too tedious) or database level (too risky). A DBA might create a `Reporting` schema with `READ-ONLY` access for analysts, while keeping the `Core_App` schema restricted to the application's service account.
+
+- **The "Serverless" Shift: What happens to the "Instance" in Cloud-Native architectures like BigQuery or Snowflake?**
+
+    In **Cloud-Native/Serverless** databases, the "Instance" layer is abstracted away — the provider manages hardware and performance automatically. The modern Database Engineer focuses almost entirely on the **Schema and Object layers**, as Instance administration becomes a managed service.
+
+- **Structural Performance: Why choose Partitioning over creating separate Tables for each month?**
+
+    **Partitioning** allows the database to treat data as a single logical table while enabling the **Query Optimizer** to perform "Partition Pruning" — automatically ignoring data slices not needed by a query, without requiring complex `UNION` queries. This keeps the Schema clean while providing the performance of smaller datasets.
