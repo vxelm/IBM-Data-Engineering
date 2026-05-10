@@ -1693,3 +1693,90 @@ DROP INDEX idx_last_name ON Employees;
 - **Q3: What happens if a user searches using two columns at the same time (e.g., `WHERE First_Name = 'John' AND Last_Name = 'Doe'`)? Does a single index work?**
     
     - **A:** A single-column index on just `Last_Name` helps, but for maximum efficiency, Senior Data Engineers use **Composite Indexes** (an index built on multiple columns). However, order matters! A composite index on `(Last_Name, First_Name)` will speed up queries searching for _both_ names or just the _last_ name, but it is useless for a query searching _only_ by the first name (this is known as the "Leftmost Prefix Rule").
+
+---
+
+
+### Normalization
+
+**Keywords / Concepts**
+
+- **Normalization:** The step-by-step process of organizing data in a database to reduce redundancy (duplicate data) and improve data integrity.
+    
+- **Data Anomalies:** The bugs that happen in unnormalized databases. If data is duplicated, updating or deleting it requires changing multiple rows. If you miss one, your database is inconsistent (corrupted).
+    
+- **OLTP vs. OLAP:** 
+	- **OLTP (Transactional):** Systems that handle everyday operations (like an online store checkout). These are strictly normalized (usually to 3NF) for fast, safe writes/updates.
+    
+    - **OLAP (Analytical):** Data warehouses used for BI and reporting. These are often **Denormalized** (rules are broken intentionally) to make reading large amounts of data faster by avoiding complex joins.
+        
+
+---
+
+### The Three Normal Forms (The Rules)
+
+**Keywords / Concepts**
+
+Database design is done in stages. You cannot reach 2NF without passing 1NF first.
+
+- **First Normal Form (1NF) - "Atomic Values":** 
+    
+    - **Rule:** Every cell must hold a single, indivisible value. Every row must be unique.
+        
+    - **Fix:** You cannot have a column like `Formats` containing "Hardback, Paperback, Audio". You must split these into separate rows.
+        
+- **Second Normal Form (2NF) - "No Partial Dependencies":** 
+    
+    - **Rule:** Must be in 1NF. Also, all non-key columns must depend on the _entire_ Primary Key.
+        
+    - **Fix:** If you find data repeating across multiple rows (like a book title repeating just to show different formats), you split the format data into a new table and link them using a Foreign Key.
+        
+- **Third Normal Form (3NF) - "No Transitive Dependencies":**
+    
+    - **Rule:** Must be in 2NF. Also, non-key columns must depend _only_ on the Primary Key, and not on other non-key columns.
+        
+    - **Fix:** The classic rule is: "Every non-key attribute must provide a fact about the key, the whole key, and nothing but the key." If `Warehouse_Location` depends on `Publisher_Name`, and `Publisher_Name` depends on `Book_ID`, that is a chain. You must break `Publisher` and `Warehouse` into their own distinct table.
+        
+
+---
+
+### Visualizing the Process
+
+Here is how the transformation looks conceptually:
+
+**Unnormalized (Bad):**
+
+| **Book_ID** | **Title** | **Formats (Violates 1NF)** | **Publisher** | **Publisher_Location (Violates 3NF)** |
+| ----------- | --------- | -------------------------- | ------------- | ------------------------------------- |
+| 101         | SQL Guide | Paperback, eBook           | TechPress     | New York                              |
+
+**1NF (Better, but repeating data):**
+
+| **Book_ID** | **Title** | **Format** | **Publisher** | **Publisher_Location** |
+| ----------- | --------- | ---------- | ------------- | ---------------------- |
+| 101         | SQL Guide | Paperback  | TechPress     | New York               |
+| 101         | SQL Guide | eBook      | TechPress     | New York               |
+
+**3NF (Ideal for production - Split into tables):**
+
+**Books Table:** `(Book_ID, Title, Publisher_ID)`
+
+**Formats Table:** `(Format_ID, Book_ID, Format_Type)`
+
+**Publishers Table:** `(Publisher_ID, Publisher_Name, Location)`
+
+---
+
+### Critical Thinking 
+
+- **Q1: The video mentions that Data Warehouses (OLAP) intentionally "Denormalize" data. Why would Data Engineers deliberately break the rules of 3NF?**
+    
+    - **A:** Performance. In a fully normalized 3NF database, gathering a complete report might require joining 10 different tables together. `JOIN` operations are computationally expensive. In a Data Warehouse where the goal is to read millions of rows rapidly for analytics (and data is rarely updated), it is much faster to have wider, "denormalized" tables where the joins are already baked in, sacrificing disk space for read speed.
+        
+- **Q2: How exactly does Normalization prevent an "Update Anomaly"?**
+    
+    - **A:** Imagine the publisher "TechPress" changes its warehouse from "New York" to "Boston." In an unnormalized database, TechPress might be listed alongside 5,000 different books. You would have to run an update on 5,000 rows. If the server crashes at row 2,500, your database is corrupted (half in NY, half in Boston). In 3NF, the location is stored in the `Publishers` table exactly **once**. You update a single row, and instantly all 5,000 books reference the correct, updated location.
+        
+- **Q3: Are there normal forms beyond 3NF? Should I use them?**
+    
+    - **A:** Yes, there is Boyce-Codd Normal Form (BCNF), 4NF, 5NF, and even 6NF. However, they deal with highly specific mathematical edge-cases involving complex overlapping composite keys. In the real world, standard industry practice dictates that stopping at **3NF** provides the perfect balance between data integrity and database performance. Going beyond 3NF often over-complicates the architecture with little practical benefit.
