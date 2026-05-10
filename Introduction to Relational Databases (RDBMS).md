@@ -1780,3 +1780,89 @@ Here is how the transformation looks conceptually:
 - **Q3: Are there normal forms beyond 3NF? Should I use them?**
     
     - **A:** Yes, there is Boyce-Codd Normal Form (BCNF), 4NF, 5NF, and even 6NF. However, they deal with highly specific mathematical edge-cases involving complex overlapping composite keys. In the real world, standard industry practice dictates that stopping at **3NF** provides the perfect balance between data integrity and database performance. Going beyond 3NF often over-complicates the architecture with little practical benefit.
+
+---
+
+
+## Relational Model Constraints
+
+Identifying the Row (Entity & Null Constraints)
+
+**Keywords / Concepts**
+
+- **Entity Integrity Constraint:** The absolute rule that every table must have a Primary Key to uniquely identify each row (tuple). Crucially, **no part of a Primary Key can be NULL**. If a key is NULL, the database loses its ability to reliably point to that specific record.
+    
+- **Null Constraint (`NOT NULL`):** A rule applied to standard columns (non-primary keys) dictating that a cell cannot be left empty. For instance, an employee record might have a NULL `Middle_Name`, but it must possess a `First_Name`.
+    
+
+---
+
+### Relationships and Meaning (Referential & Semantic)
+
+**Keywords / Concepts**
+
+- **Referential Integrity Constraint:** The rule that maintains the "connective tissue" between tables using Primary and Foreign Keys. It prevents "orphan" records. If an order record says it belongs to `Customer_ID = 5`, this constraint guarantees that `Customer 5` actually exists in the Customers table.
+    
+- **Semantic Integrity Constraint:** This deals with the _real-world logical correctness_ of the data. Even if data passes system checks (e.g., entering "XYZ" into a `City` text column), it violates semantic integrity because "XYZ" is not a meaningful, real-world city.
+    
+
+---
+
+### Validating the Data (Domain & Check)
+
+**Keywords / Concepts**
+
+- **Domain Constraint:** A domain defines the permitted set of values for an attribute. This constraint ensures the data entered matches the required format or basic type (e.g., A `Country_Code` must strictly be two letters like 'US' or 'CA', not a number like '34').
+    
+- **Check Constraint:** A specific, programmable rule that acts as a gatekeeper to enforce domain integrity by limiting the exact values accepted. (e.g., A rule stating that an employee's `Salary` must be `> 0`, or a book's `Publish_Year` cannot be in the future).
+    
+
+---
+
+### Diagrams: Implementation in SQL
+
+SQL
+
+```
+CREATE TABLE Authors (
+    -- 1. Entity Integrity (Inherently UNIQUE and NOT NULL)
+    Author_ID VARCHAR(5) PRIMARY KEY, 
+    
+    -- 2. Null Constraint
+    First_Name VARCHAR(50) NOT NULL,  
+    
+    -- 3. Domain Constraint (Enforced via Data Type sizing)
+    Country_Code CHAR(2)              
+);
+
+CREATE TABLE Books (
+    Book_ID INT PRIMARY KEY,
+    Title VARCHAR(100) NOT NULL,
+    Author_ID VARCHAR(5),
+    Publish_Year INT,
+    
+    -- 4. Check Constraint (Limiting logical values)
+    CONSTRAINT chk_year CHECK (Publish_Year <= 2024),
+    
+    -- 5. Referential Integrity (Connecting to the Authors table)
+    CONSTRAINT fk_author 
+        FOREIGN KEY (Author_ID) 
+        REFERENCES Authors(Author_ID)
+);
+```
+
+---
+
+### Critical Thinking
+
+- **Q1: The video separates "Domain Constraint" and "Check Constraint". How are they actually related in database engineering?**
+    
+    - **A:** A "Domain" is the _theoretical concept_ (the allowable set of values), while a `CHECK` constraint is the _actual SQL tool_ used to enforce that concept. For example, the "Domain" of a percentage is 0 to 100. You implement that domain in SQL by writing: `CONSTRAINT chk_pct CHECK (value >= 0 AND value <= 100)`.
+        
+- **Q2: The video says "Semantic Integrity" ensures data meaning (like preventing 'Garbage' in a City column). How do databases actually enforce this if they don't know real-world geography?**
+    
+    - **A:** Databases enforce semantic integrity using **Lookup Tables** (Reference Tables) combined with Referential Integrity. Instead of letting users type a city name into a text box, the database architect creates a verified, locked `Cities` table. The main table then only accepts a `City_ID` that links back to that verified list, making it impossible to enter "garbage" text.
+        
+- **Q3: The Entity Integrity rule states a Primary Key cannot be NULL. What if a table uses a "Composite Primary Key" made of three different columns? Can just one of those columns be NULL?**
+    
+    - **A:** **No.** In a Composite Primary Key, _none_ of the participating columns can be NULL. Even if two out of the three columns have data, the presence of a single NULL value instantly destroys the composite key's ability to guarantee absolute uniqueness for that row.
