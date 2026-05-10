@@ -1,4 +1,4 @@
-
+		
 ## **Data Fundamentals**
 
 1. **Definition of Data**
@@ -1531,3 +1531,165 @@ Here is why it differs from universal formats like CSV or JSON, and why a databa
 - **Structural Performance: Why choose Partitioning over creating separate Tables for each month?**
 
     **Partitioning** allows the database to treat data as a single logical table while enabling the **Query Optimizer** to perform "Partition Pruning" — automatically ignoring data slices not needed by a query, without requiring complex `UNION` queries. This keeps the Schema clean while providing the performance of smaller datasets.
+
+---
+## Primary Keys (The Unique Identifier)
+
+**Keywords / Concepts**
+
+- **Primary Key (PK):** A column (or set of columns) that **uniquely identifies** every single row in a table. It cannot contain NULL values, and every table can only have **one** Primary Key.
+    
+- **Natural vs. Artificial Keys:**
+    
+    - A _Natural Key_ is an existing unique attribute (e.g., `Employee_ID` or `Email`).
+        
+    - If no unique attribute exists, you add an _Artificial (or Surrogate) Key_ (e.g., an auto-incrementing integer).
+        
+- **Composite Key:** When a single column isn't enough to guarantee uniqueness, you can combine two or more columns to create the Primary Key (e.g., `Site_ID` + `Employee_ID`).
+    
+
+---
+
+### Foreign Keys (The Relationship Bridge)
+
+**Keywords / Concepts**
+
+- **Foreign Key (FK):** A column in one table that references the Primary Key of another table. It is the "glue" that connects tables together in a relational database.
+    
+- **Referential Integrity:** The core purpose of an FK. It ensures that you cannot add a record to the child table if the corresponding parent record does not exist. (e.g., You cannot add a copy of a book to the `Copies` table if the `Book_ID` doesn't exist in the main `Books` table).
+    
+- **Parent-Child Relationship:** The table with the Primary Key is the **Parent**, and the table with the Foreign Key is the **Child**.
+    
+
+---
+
+### Referential Actions (The "Rules")
+
+**Keywords / Concepts**
+
+When a record in the Parent table is updated or deleted, the database needs to know what to do with the connected Child records. You define this using `ON DELETE` or `ON UPDATE` clauses:
+
+- **NO ACTION / RESTRICT:** The default behavior. If you try to delete a parent record that has linked child records, the database blocks the deletion and throws an error.
+    
+- **CASCADE:** A domino effect. If you delete the parent record, the database automatically deletes all related child records.
+    
+- **SET NULL:**  If you delete the parent record, the child records are kept, but their Foreign Key column is updated to `NULL` (meaning they are no longer assigned to a parent).
+    
+
+---
+
+### Diagrams: Implementation Syntax
+
+```
+-- Creating a Parent Table with a Primary Key
+CREATE TABLE Books (
+    Book_ID INT NOT NULL,
+    Title VARCHAR(100),
+    -- Defining the Primary Key
+    PRIMARY KEY (Book_ID) 
+);
+
+-- Creating a Child Table with a Foreign Key
+CREATE TABLE Book_Copies (
+    Copy_ID INT NOT NULL,
+    Book_ID INT,           -- This will be the Foreign Key
+    Condition VARCHAR(50),
+    PRIMARY KEY (Copy_ID),
+    
+    -- Defining the Foreign Key and its Rules
+    CONSTRAINT fk_book 
+        FOREIGN KEY (Book_ID) 
+        REFERENCES Books(Book_ID)
+        ON DELETE CASCADE  -- If the book is removed, remove all its copies
+);
+```
+
+---
+
+### Critical Thinking: Beyond the Video
+
+- **Q1: The video mentions using "naturally occurring unique attributes" like an Employee ID or SSN as a Primary Key. Why do Senior Database Engineers often avoid this in practice?**
+    
+    - **A:** Real-world attributes can change, or they can pose privacy risks. For example, if you use a user's Email as a Primary Key, and they want to change their email, you have to update the Primary Key and cascade that update to potentially dozens of other tables. Instead, engineers prefer **Surrogate Keys** (meaningless, auto-incrementing numbers or UUIDs) that never change, regardless of what happens to the user's real-world data.
+        
+- **Q2: By definition, a Primary Key cannot be NULL. Can a Foreign Key be NULL?**
+    
+    - **A:** **Yes.** Unless you specifically add a `NOT NULL` constraint to the Foreign Key column, it can be empty. For example, in an `Employees` table, you might have a `Department_ID` Foreign Key. If a new employee hasn't been assigned to a department yet, their `Department_ID` would simply be `NULL`.
+        
+- **Q3: The `CASCADE` delete rule sounds incredibly convenient. Why is it considered dangerous in large-scale production databases?**
+    
+    - **A:** It can cause a catastrophic chain reaction of accidental data loss. Imagine a user deletes their account. If `ON DELETE CASCADE` is set on all related tables, the database will silently delete all their order history, their comments, their support tickets, and their payment records in milliseconds. Usually, companies prefer a "Soft Delete" (setting an `Is_Active` column to False) rather than actually deleting rows from the database.
+
+---
+
+## What is an Index? (The Concept)
+
+**Keywords / Concepts**
+
+- **Index:**  A separate data structure in the database that stores a sorted copy of a specific column, along with **pointers** to the original rows.
+    
+- **The Problem (Full Table Scan):** By default, data added to a table has no inherent order. Without an index, the database must scan every single row from top to bottom to find a match.
+    
+- **The Library Analogy:** Instead of walking through every shelf looking for a specific author (a full table scan), you check the library catalog (the index), which tells you the exact aisle and shelf (the pointer).
+    
+- **Automatic Indexing:** When you define a **Primary Key**, the database automatically creates a unique index for that column under the hood.
+    
+
+---
+
+### The Great Trade-off (Pros vs. Cons)
+
+**Keywords / Concepts**
+
+Indexing is a balancing act between read speed and write speed.
+
+- **Advantages (The "Pros"):**
+    
+    - **Blazing Fast `SELECT`:** Drastically reduces query time for searching.
+        
+    - **Reduced Sorting:** If the index is already sorted, the database doesn't have to work as hard when you use `ORDER BY`.
+        
+    - **Data Integrity:** Using a `UNIQUE` index prevents duplicate entries.
+        
+- **Disadvantages (The "Cons"):**
+    
+    - **The "Write Penalty":** This is the biggest drawback. Every time you `INSERT`, `UPDATE`, or `DELETE` a row, the database has to update the table _and_ update/resort the index. This makes write operations slower.
+        
+    - **Storage Cost:** Indexes are physical structures. Having too many indexes can consume a massive amount of disk space.
+        
+
+---
+
+### Implementation Syntax
+
+SQL
+
+```
+-- Creating a standard index to speed up searches by Last Name
+CREATE INDEX idx_last_name 
+ON Employees (Last_Name);
+
+-- Creating a UNIQUE index to ensure no duplicate emails exist
+-- (This acts as both a performance booster and a constraint)
+CREATE UNIQUE INDEX idx_unique_email 
+ON Employees (Email);
+
+-- Dropping an index when it's no longer needed (syntax varies slightly by DB)
+DROP INDEX idx_last_name ON Employees;
+```
+
+---
+
+### Critical Thinking Beyond the Video
+
+- **Q1: If indexes make `SELECT` queries so fast, why don't we just index every single column in the table?**
+    
+    - **A:** Because of the **Write Penalty** and **Storage Cost**. If you index every column, a single `INSERT` statement might require the database to update 20 different indexes before completing the transaction. This would cripple the database's ability to handle high volumes of new data. Indexes should only be created on columns that are frequently used in `WHERE` clauses or `JOIN` conditions.
+        
+- **Q2: The video says to index columns you search often. Are there specific types of columns where an index is actually useless?**
+    
+    - **A:** Yes. You should avoid indexing **low-cardinality columns** (columns with very few unique values). For example, a `Gender` column or an `Is_Active` (True/False) column. If a column only has two possible values, the index doesn't help narrow down the search enough to be useful, and the database optimizer will likely ignore the index and do a full table scan anyway.
+        
+- **Q3: What happens if a user searches using two columns at the same time (e.g., `WHERE First_Name = 'John' AND Last_Name = 'Doe'`)? Does a single index work?**
+    
+    - **A:** A single-column index on just `Last_Name` helps, but for maximum efficiency, Senior Data Engineers use **Composite Indexes** (an index built on multiple columns). However, order matters! A composite index on `(Last_Name, First_Name)` will speed up queries searching for _both_ names or just the _last_ name, but it is useless for a query searching _only_ by the first name (this is known as the "Leftmost Prefix Rule").
